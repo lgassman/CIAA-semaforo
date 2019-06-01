@@ -11,6 +11,9 @@
 #include "SemaforoMain.h"
 #include "sapi.h"
 #include "Semaforo.h"
+#include "Esquina.h"
+#include "EsquinaSwitch.h"
+
 
 /*=====[Definition macros of private constants]==============================*/
 
@@ -28,17 +31,20 @@ int main( void )
 {
    // ----- Setup -----------------------------------
    boardInit();
+   semaforo_init();
+
+
+   Esquina * esquina = esquina_create();
+   EsquinaSwitch * esquinaSwitch = esquinaSwitch_create(esquina, TEC1, TEC2);
+
+   if(!esquina) {
+	   return 1;
+   }
 
    // ----- Repeat for ever -------------------------
-   Semaforo * sem = semaforo_create();
-
-   Semaforo * semSecundario = semaforo_create();
-   semaforo_configLeds(semSecundario, LEDR, LEDG, LEDB);
-   semaforo_setModo(semSecundario, semaforo_secundario);
-
    while( true ) {
-	   semaforo_cycle(sem);
-	   semaforo_cycle(semSecundario);
+	   esquina_cycle(esquina);
+	   esquinaSwitch_cycle(esquinaSwitch);
    }
 
    // YOU NEVER REACH HERE, because this program runs directly or on a
