@@ -8,122 +8,193 @@
 #include "sapi.h"
 #include "Semaforo.h"
 #include "Led.h"
+#include <stdlib.h>
 
-#define normalStatesSize 4
+typedef void (*changeMode)(Semaforo *);
+
+#define StatesSize 6
+#define ModesSize 3
 
 typedef enum {
 	RED_STATE,
 	REDYELLOW_STATE,
 	YELLOW_STATE,
 	GREEN_STATE,
-} NormalModeState;
+	OFF_STATE,
+	INIT_STATE,
+} ModeState;
 
 
-static SemaforoMode mode;
-static NormalModeState currentState = RED_STATE;
-static tick_t lastStateChange;
-
-static gpioMap_t greenLed = LED1;
-static gpioMap_t yellowLed = LED3;
-static gpioMap_t redLed = LED2;
-
-
-
-static uint32_t normalTimes[normalStatesSize];
-static uint32_t normalNextState[normalStatesSize];
-static uint32_t normalStateLeds[normalStatesSize][3]; //red, yellow, green,
-
-
-void normal();
-void disabled();
-int updateNormalState();
-void handleNormalLeds();
+struct Semaforo{
+	SemaforoMode mode;
+	ModeState currentState;
+	tick_t lastStateChange;
+	gpioMap_t greenLed;
+	gpioMap_t yellowLed;
+	gpioMap_t redLed;
+	uint32_t time[StatesSize];
+	uint32_t nextState[StatesSize];
+	uint32_t stateLeds[StatesSize][3]; //red, yellow, green: 1 o 0
+	changeMode changeModeFunctions[ModesSize];
+};
 
 
-void semamoforo_init() {
-	lastStateChange = tickRead();
+void principal(Semaforo *);
+void deshabilitado(Semaforo *);
+void secundario(Semaforo * semaforo);
+uint32_t updateState(Semaforo *);
+void handleLeds(Semaforo *);
 
-	normalTimes[RED_STATE] = 6000;
-	normalTimes[REDYELLOW_STATE] = 1000;
-	normalTimes[YELLOW_STATE] = 2000;
-	normalTimes[GREEN_STATE] = 4000;
 
-	normalNextState[RED_STATE] = REDYELLOW_STATE;
-	normalNextState[REDYELLOW_STATE] = GREEN_STATE;
-	normalNextState[YELLOW_STATE] = RED_STATE;
-	normalNextState[GREEN_STATE] = YELLOW_STATE;
-
-	normalStateLeds[GREEN_STATE][0] = 0; //red,
-	normalStateLeds[GREEN_STATE][1] = 0; //yellow,
-	normalStateLeds[GREEN_STATE][2] = 1; //green,
-
-	normalStateLeds[RED_STATE][0] = 1;
-	normalStateLeds[RED_STATE][1] = 0;
-	normalStateLeds[RED_STATE][2] = 0;
-
-	normalStateLeds[YELLOW_STATE][0] = 0;
-	normalStateLeds[YELLOW_STATE][1] = 1;
-	normalStateLeds[YELLOW_STATE][2] = 0;
-
-	normalStateLeds[REDYELLOW_STATE][0] = 1;
-	normalStateLeds[REDYELLOW_STATE][1] = 1;
-	normalStateLeds[REDYELLOW_STATE][2] = 0;
-
-	currentState = RED_STATE;
-	mode = Normal;
-	handleNormalLeds();
-	lastStateChange = tickRead();
+void semaforo_delete (Semaforo * semaforo) {
+	free((void *)semaforo);
 }
 
 
-void semamoforo_setMode(SemaforoMode _mode) {
-	mode = _mode;
+void semaforo_configLeds(Semaforo * semaforo, gpioMap_t red, gpioMap_t yellow, gpioMap_t green) {
+	semaforo->redLed = red;
+	semaforo->yellowLed = yellow;
+	semaforo->greenLed = green;
 }
 
 
+Semaforo * semaforo_create() {
+	Semaforo * semaforo = (Semaforo *)malloc(sizeof(Semaforo));
+	if(semaforo == NULL) {
+		return NULL;
+	}
+	semaforo_configLeds(semaforo, LED2, LED3, LED1);
 
-void semamoforo_cycle() {
-	switch (mode) {
-	case Normal: {
-		normal();
-		break;
-	}
-	case Disabled: {
-		disabled();
-		break;
-	}
+	semaforo->currentState = INIT_STATE;
+	semaforo->lastStateChange = tickRead();
+
+	semaforo->stateLeds[INIT_STATE][0] = 1; //red,
+	semaforo->stateLeds[INIT_STATE][1] = 0; //yellow,
+	semaforo->stateLeds[INIT_STATE][2] = 0; //green,
+
+	semaforo->stateLeds[GREEN_STATE][0] = 0; //red,
+	semaforo->stateLeds[GREEN_STATE][1] = 0; //yellow,
+	semaforo->stateLeds[GREEN_STATE][2] = 1; //green,
+
+	semaforo->stateLeds[RED_STATE][0] = 1;
+	semaforo->stateLeds[RED_STATE][1] = 0;
+	semaforo->stateLeds[RED_STATE][2] = 0;
+
+	semaforo->stateLeds[YELLOW_STATE][0] = 0;
+	semaforo->stateLeds[YELLOW_STATE][1] = 1;
+	semaforo->stateLeds[YELLOW_STATE][2] = 0;
+
+	semaforo->stateLeds[REDYELLOW_STATE][0] = 1;
+	semaforo->stateLeds[REDYELLOW_STATE][1] = 1;
+	semaforo->stateLeds[REDYELLOW_STATE][2] = 0;
+
+	semaforo->stateLeds[OFF_STATE][0] = 0;
+	semaforo->stateLeds[OFF_STATE][1] = 0;
+	semaforo->stateLeds[OFF_STATE][2] = 0;
+
+
+	semaforo->changeModeFunctions[semaforo_principal] = principal;
+	semaforo->changeModeFunctions[semaforo_deshabilitado] = deshabilitado;
+	semaforo->changeModeFunctions[semaforo_secundario] = secundario;
+
+	semaforo->currentState = INIT_STATE;
+
+	semaforo->lastStateChange = tickRead();
+	semaforo->mode = semaforo_principal;
+	principal(semaforo);
+	handleLeds(semaforo);
+
+	return semaforo;
+}
+/**
+----| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8  | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18  |  19 | 20 | 21
+P     R   R   R  R    R   R   R    R   RY   V    V   V     V    V    V     V    V   V   Y    Y  Y
+----
+S     R   RY  V  V    V   V   Y    R   R    R    R   R     R    R    R     R    R   R   R    R   R
+----
+*/
+void secundario(Semaforo * semaforo) {
+
+	semaforo->nextState[INIT_STATE] = REDYELLOW_STATE;
+	semaforo->nextState[RED_STATE] = REDYELLOW_STATE;
+	semaforo->nextState[REDYELLOW_STATE] = GREEN_STATE;
+	semaforo->nextState[YELLOW_STATE] = RED_STATE;
+	semaforo->nextState[GREEN_STATE] = YELLOW_STATE;
+	semaforo->nextState[OFF_STATE] = OFF_STATE;
+
+	semaforo->time[INIT_STATE] = 1000;
+	semaforo->time[RED_STATE] = 15000;
+	semaforo->time[REDYELLOW_STATE] = 1000;
+	semaforo->time[YELLOW_STATE] = 1000;
+	semaforo->time[GREEN_STATE] = 4000;
+	semaforo->time[OFF_STATE] = 0;
+}
+
+
+void principal(Semaforo * semaforo) {
+
+	semaforo->nextState[INIT_STATE] = RED_STATE;
+	semaforo->nextState[RED_STATE] = REDYELLOW_STATE;
+	semaforo->nextState[REDYELLOW_STATE] = GREEN_STATE;
+	semaforo->nextState[YELLOW_STATE] = RED_STATE;
+	semaforo->nextState[GREEN_STATE] = YELLOW_STATE;
+	semaforo->nextState[OFF_STATE] = OFF_STATE;
+
+	semaforo->time[INIT_STATE] = 0;
+	semaforo->time[RED_STATE] = 8000;
+	semaforo->time[REDYELLOW_STATE] = 1000;
+	semaforo->time[YELLOW_STATE] = 3000;
+	semaforo->time[GREEN_STATE] = 9000;
+	semaforo->time[OFF_STATE] = 0;
+
+
+}
+
+void deshabilitado(Semaforo * semaforo) {
+	semaforo->nextState[INIT_STATE] = YELLOW_STATE;
+	semaforo->nextState[RED_STATE] = RED_STATE;
+	semaforo->nextState[REDYELLOW_STATE] = REDYELLOW_STATE;
+	semaforo->nextState[YELLOW_STATE] = OFF_STATE;
+	semaforo->nextState[GREEN_STATE] = GREEN_STATE;
+	semaforo->nextState[OFF_STATE] = YELLOW_STATE;
+
+	semaforo->time[INIT_STATE] = 1000;
+	semaforo->time[RED_STATE] = 0;
+	semaforo->time[REDYELLOW_STATE] = 0;
+	semaforo->time[YELLOW_STATE] = 1000;
+	semaforo->time[GREEN_STATE] = 0;
+	semaforo->time[OFF_STATE] = 1000;
+}
+
+void semaforo_setModo(Semaforo * semaforo, SemaforoMode mode) {
+	if (semaforo->mode != mode) {
+		semaforo->mode = mode;
+		semaforo->currentState = INIT_STATE;
+		semaforo->lastStateChange = tickRead();
+		semaforo->changeModeFunctions[semaforo->mode](semaforo);
 	}
 }
 
-int updateNormalState() {
+void semaforo_cycle(Semaforo * semaforo) {
+	if(updateState(semaforo)) {
+		handleLeds(semaforo);
+	}
+}
+
+uint32_t updateState(Semaforo * semaforo) {
 	tick_t newTick = tickRead();
 
-	if(newTick - lastStateChange > normalTimes[currentState]) {
-		lastStateChange  = newTick;
-		currentState = normalNextState[currentState];
+	if (newTick - semaforo->lastStateChange > semaforo->time[semaforo->currentState]) {
+		semaforo->lastStateChange = newTick;
+		semaforo->currentState = semaforo->nextState[semaforo->currentState];
 		return 1;
-	}
-	else {
+	} else {
 		return 0;
 	}
 }
 
-void normal() {
-
-	if(updateNormalState()) {
-		handleNormalLeds();
-	}
+void handleLeds(Semaforo * semaforo) {
+	led_setValue(semaforo->redLed, semaforo->stateLeds[semaforo->currentState][0]);
+	led_setValue(semaforo->greenLed, semaforo->stateLeds[semaforo->currentState][1]);
+	led_setValue(semaforo->yellowLed, semaforo->stateLeds[semaforo->currentState][2]);
 }
-
-void handleNormalLeds() {
-	led_setValue(redLed , normalStateLeds[currentState][0]);
-	led_setValue(greenLed , normalStateLeds[currentState][1]);
-	led_setValue(yellowLed , normalStateLeds[currentState][2]);
-}
-
-void disabled() {
-	led_setValue(redLed , false );
-	led_setValue(greenLed , false );
-	led_setValue(yellowLed , false );
-}
-

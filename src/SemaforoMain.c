@@ -30,10 +30,15 @@ int main( void )
    boardInit();
 
    // ----- Repeat for ever -------------------------
-   semamoforo_init();
-   semamoforo_setMode(Normal);
+   Semaforo * sem = semaforo_create();
+
+   Semaforo * semSecundario = semaforo_create();
+   semaforo_configLeds(semSecundario, LEDR, LEDG, LEDB);
+   semaforo_setModo(semSecundario, semaforo_secundario);
+
    while( true ) {
-	   semamoforo_cycle();
+	   semaforo_cycle(sem);
+	   semaforo_cycle(semSecundario);
    }
 
    // YOU NEVER REACH HERE, because this program runs directly or on a
