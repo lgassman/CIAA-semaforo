@@ -33,11 +33,6 @@
 	void semaforo_delete (Semaforo *);
 
 	/**
-	 * Configura los gpio para los leds, por default usa Led 1, 2 y 3
-	 */
-	void semaforo_configLeds(Semaforo *, gpioMap_t red, gpioMap_t yellow, gpioMap_t green);
-
-	/**
 	 * Cambia el modo del semáforo. Por defaul es primario
 	 */
 	void semaforo_setModo(Semaforo *, SemaforoMode);
@@ -46,6 +41,12 @@
 	 * Función a ser llamada desde el superloop
 	 */
 	void semaforo_cycle(Semaforo *);
+
+	/**
+	 * devuelve un array de tres elementos 0=rojo 1=amarillo 2=verde
+	 * Cada elemento dice si la luz
+	 */
+	bool_t * semaforo_getLuces(Semaforo *);
 
 
 #endif /* PROGRAMS_SEMAFORO_INC_SEMAFORO_H_ */

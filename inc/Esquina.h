@@ -11,11 +11,16 @@
 struct Esquina;
 typedef struct Esquina Esquina;
 
+#include "Semaforo.h"
+
 Esquina * esquina_create();
 void esquina_delete(Esquina * esquina);
 void esquina_habilitar(Esquina * esquina);
 void esquina_deshabilitar(Esquina * esquina);
 void esquina_cambiarModo(Esquina * esquina);
 void esquina_cycle(Esquina * esquina);
+Semaforo * esquina_getPrincipal(Esquina * esquina);
+Semaforo * esquina_getSecundario(Esquina * esquina);
+
 
 #endif /* PROGRAMS_SEMAFORO_INC_ESQUINA_H_ */

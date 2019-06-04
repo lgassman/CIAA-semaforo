@@ -13,6 +13,7 @@
 #include "Semaforo.h"
 #include "Esquina.h"
 #include "EsquinaSwitch.h"
+#include "SemaforoLeds.h"
 
 
 /*=====[Definition macros of private constants]==============================*/
@@ -36,6 +37,8 @@ int main( void )
 
    Esquina * esquina = esquina_create();
    EsquinaSwitch * esquinaSwitch = esquinaSwitch_create(esquina, TEC1, TEC2);
+   SemaforoLeds * semaforoPrincipalRender = semaforoLeds_createDefault( esquina_getPrincipal(esquina));
+   SemaforoLeds * semaforoSecundarioRender = semaforoLeds_create( esquina_getSecundario(esquina), LEDR, LEDB, LEDG);
 
    if(!esquina) {
 	   return 1;
@@ -43,8 +46,14 @@ int main( void )
 
    // ----- Repeat for ever -------------------------
    while( true ) {
+	   //entradas
 	   esquina_cycle(esquina);
+	   //modelo
 	   esquinaSwitch_cycle(esquinaSwitch);
+	   //salida
+	   semaforoLeds_cycle(semaforoPrincipalRender);
+	   semaforoLeds_cycle(semaforoSecundarioRender);
+
    }
 
    // YOU NEVER REACH HERE, because this program runs directly or on a

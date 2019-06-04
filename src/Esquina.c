@@ -28,13 +28,11 @@ Esquina * esquina_create() {
 		return NULL;
 	}
 
-
 	esquina->secundario = semaforo_create();
 	if(esquina->secundario == NULL) {
 		esquina_delete(esquina);
 		return NULL;
 	}
-	semaforo_configLeds(esquina->secundario, LEDR, LEDG, LEDB);
 
 	esquina_habilitar(esquina);
 	return esquina;
@@ -75,6 +73,14 @@ void esquina_cycle(Esquina * esquina) {
 	semaforo_cycle(esquina->principal);
 	semaforo_cycle(esquina->secundario);
 }
+
+Semaforo * esquina_getPrincipal(Esquina * esquina) {
+	return esquina->principal;
+}
+Semaforo * esquina_getSecundario(Esquina * esquina) {
+	return esquina->secundario;
+}
+
 
 
 

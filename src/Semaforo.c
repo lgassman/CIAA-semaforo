@@ -29,9 +29,6 @@ struct Semaforo {
 	SemaforoMode mode;
 	ModeState currentState;
 	tick_t lastStateChange;
-	gpioMap_t greenLed;
-	gpioMap_t yellowLed;
-	gpioMap_t redLed;
 	uint32_t time[StatesSize];
 	uint32_t nextState[StatesSize];
 };
@@ -40,13 +37,12 @@ struct Semaforo {
 void principal(Semaforo *);
 void deshabilitado(Semaforo *);
 void secundario(Semaforo * semaforo);
-uint32_t updateState(Semaforo *);
-void handleLeds(Semaforo *);
 
 //Para cada estado si la luz está prendida o apagada
-	static uint32_t stateLeds[StatesSize][3]; //red, yellow, green: 1 o 0
+	static bool_t stateLeds[StatesSize][3]; //red, yellow, green: 1 o 0
 //Para cada modo cual es la función que pone un semaforo en ese modo
 	static changeMode changeModeFunctions[ModesSize];
+
 
 void semaforo_init() {
 
@@ -80,17 +76,8 @@ void semaforo_init() {
 	changeModeFunctions[semaforo_secundario] = secundario;
 }
 
-
-
 void semaforo_delete(Semaforo * semaforo) {
 	free((void *) semaforo);
-}
-
-void semaforo_configLeds(Semaforo * semaforo, gpioMap_t red, gpioMap_t yellow,
-		gpioMap_t green) {
-	semaforo->redLed = red;
-	semaforo->yellowLed = yellow;
-	semaforo->greenLed = green;
 }
 
 Semaforo * semaforo_create() {
@@ -98,7 +85,6 @@ Semaforo * semaforo_create() {
 	if (semaforo == NULL) {
 		return NULL;
 	}
-	semaforo_configLeds(semaforo, LED2, LED3, LED1);
 
 	semaforo->currentState = INIT_STATE;
 	semaforo->lastStateChange = tickRead();
@@ -108,7 +94,6 @@ Semaforo * semaforo_create() {
 	semaforo->lastStateChange = tickRead();
 	semaforo->mode = semaforo_principal;
 	principal(semaforo);
-	handleLeds(semaforo);
 
 	return semaforo;
 }
@@ -180,25 +165,17 @@ void semaforo_setModo(Semaforo * semaforo, SemaforoMode mode) {
 }
 
 void semaforo_cycle(Semaforo * semaforo) {
-	if (updateState(semaforo)) {
-		handleLeds(semaforo);
-	}
-}
-
-uint32_t updateState(Semaforo * semaforo) {
 	tick_t newTick = tickRead();
 
 	if (newTick - semaforo->lastStateChange > semaforo->time[semaforo->currentState]) {
 		semaforo->lastStateChange = newTick;
 		semaforo->currentState = semaforo->nextState[semaforo->currentState];
-		return 1;
-	} else {
-		return 0;
 	}
 }
 
-void handleLeds(Semaforo * semaforo) {
-	led_setValue(semaforo->redLed, stateLeds[semaforo->currentState][0]);
-	led_setValue(semaforo->greenLed, stateLeds[semaforo->currentState][1]);
-	led_setValue(semaforo->yellowLed, stateLeds[semaforo->currentState][2]);
+bool_t* semaforo_getLuces(Semaforo * semaforo) {
+	return stateLeds[semaforo->currentState];
 }
+
+
+
