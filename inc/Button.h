@@ -1,8 +1,14 @@
-/*
+/**
  * Button.h
  *
  *  Created on: Jun 1, 2019
  *      Author: leo
+ *
+ * Es un botón que tiene antirebote.
+ * Es un TAD que se crea a partir de un un modelo y un pin gpio.
+ * Además se le configura las funciones onPress y OnRelease que son invocadas
+ * cuando corresponden pasando el modelo como parámetro en un puntero a void.
+ * Puede no configurarse alguna función si no se desea
  */
 
 #ifndef PROGRAMS_SEMAFORO_INC_BUTTON_H_

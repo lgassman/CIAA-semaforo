@@ -14,7 +14,7 @@
 #include "Esquina.h"
 #include "EsquinaSwitch.h"
 #include "SemaforoLeds.h"
-
+#include "SemaforoLedsRGB.h"
 
 /*=====[Definition macros of private constants]==============================*/
 
@@ -38,7 +38,7 @@ int main( void )
    Esquina * esquina = esquina_create();
    EsquinaSwitch * esquinaSwitch = esquinaSwitch_create(esquina, TEC1, TEC2);
    SemaforoLeds * semaforoPrincipalRender = semaforoLeds_createDefault( esquina_getPrincipal(esquina));
-   SemaforoLeds * semaforoSecundarioRender = semaforoLeds_create( esquina_getSecundario(esquina), LEDR, LEDB, LEDG);
+   SemaforoLedsRGB * semaforoSecundarioRender = semaforoLedsRGB_createDefault( esquina_getSecundario(esquina));
 
    if(!esquina) {
 	   return 1;
@@ -52,7 +52,7 @@ int main( void )
 	   esquinaSwitch_cycle(esquinaSwitch);
 	   //salida
 	   semaforoLeds_cycle(semaforoPrincipalRender);
-	   semaforoLeds_cycle(semaforoSecundarioRender);
+	   semaforoLedsRGB_cycle(semaforoSecundarioRender);
 
    }
 

@@ -3,6 +3,11 @@
  *
  *  Created on: May 16, 2019
  *      Author: leo
+ *
+ *  Es un TDA que modela un semáforo. Tiene 3 modos de uso: principal, secundario
+ *  o deshabilitado. Los tiempos de cada modo están hardcodeados.
+ *  Se puede consultar en que estado están las luces (para cada luz si está
+ *  prendida o apagada)
  */
 
 #ifndef PROGRAMS_SEMAFORO_INC_SEMAFORO_H_

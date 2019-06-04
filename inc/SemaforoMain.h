@@ -4,6 +4,12 @@
  * License: gpl-3.0 (see LICENSE.txt)
  * Date: 2019/05/16
  * Version: 1.0
+ *
+ * Es un superloop que maneja una esquina. Usa TDA para cada componente,
+ * cada componente tiene un método xxx_cycle(tda) que debe ser llamado en el
+ * superloop. Se pueden identificar 3 tipos de componentes por su responsabilidad:
+ * entrada (Button, EsquinaSwitch), Modelo (Esquina, Semaforo) y Salidas
+ * (SemaforoLeds y SemaforoLedsRGB
  *===========================================================================*/
 
 /*=====[Avoid multiple inclusion - begin]====================================*/
