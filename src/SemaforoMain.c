@@ -53,7 +53,7 @@ int main( void )
 	   //salida
 	   semaforoLeds_cycle(semaforoPrincipalRender);
 	   semaforoLedsRGB_cycle(semaforoSecundarioRender);
-
+	   sleepUntilNextInterrupt();
    }
 
    // YOU NEVER REACH HERE, because this program runs directly or on a
