@@ -26,6 +26,7 @@ void nullHandler(void *);
 void initDelayCounter(Button * button);
 void changeState(Button * button, ButtonState state);
 
+
 Button * button_create(gpioMap_t gpio, void * model) {
 
 	Button * button = malloc(sizeof(Button));

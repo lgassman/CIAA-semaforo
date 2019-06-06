@@ -36,13 +36,17 @@ int main( void )
 
 
    Esquina * esquina = esquina_create();
+   if(!esquina ) {
+	   return 1;
+   }
+
    EsquinaSwitch * esquinaSwitch = esquinaSwitch_create(esquina, TEC1, TEC2);
    SemaforoLeds * semaforoPrincipalRender = semaforoLeds_createDefault( esquina_getPrincipal(esquina));
    SemaforoLedsRGB * semaforoSecundarioRender = semaforoLedsRGB_createDefault( esquina_getSecundario(esquina));
-
-   if(!esquina) {
+   if(!esquinaSwitch || !semaforoPrincipalRender || !semaforoSecundarioRender ) {
 	   return 1;
    }
+
 
    // ----- Repeat for ever -------------------------
    while( true ) {
