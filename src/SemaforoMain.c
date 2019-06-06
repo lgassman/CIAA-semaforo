@@ -51,9 +51,9 @@ int main( void )
    // ----- Repeat for ever -------------------------
    while( true ) {
 	   //entradas
-	   esquina_cycle(esquina);
-	   //modelo
 	   esquinaSwitch_cycle(esquinaSwitch);
+	   //modelo
+	   esquina_cycle(esquina);
 	   //salida
 	   semaforoLeds_cycle(semaforoPrincipalRender);
 	   semaforoLedsRGB_cycle(semaforoSecundarioRender);
