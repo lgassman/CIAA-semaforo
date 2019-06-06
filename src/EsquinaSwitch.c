@@ -48,9 +48,9 @@ EsquinaSwitch * esquinaSwitch_delete(EsquinaSwitch * esquinaSwitch) {
 	free(esquinaSwitch);
 }
 
-EsquinaSwitch * esquinaSwitch_cycle(EsquinaSwitch * esquina) {
-	button_cycle(esquina->boton);
-	button_cycle(esquina->pulsador);
+EsquinaSwitch * esquinaSwitch_cycle(EsquinaSwitch * esquinaSwitch) {
+	button_cycle(esquinaSwitch->boton);
+	button_cycle(esquinaSwitch->pulsador);
 }
 
 
