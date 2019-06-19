@@ -86,16 +86,26 @@ void button_cycle(Button * button) {
 			break;
 		};
 		case FALLING : {
-			if(delayRead(&button->delay) && pressed) {
-				changeState(button, DOWN);
-				button->onPress(button->model);
+			if(delayRead(&button->delay)) {
+				if(pressed) {
+					changeState(button, DOWN);
+					button->onPress(button->model);
+				}
+				else {
+					changeState(button, UP);
+				}
 			}
 			break;
 		}
 		case RISING : {
-			if(delayRead(&button->delay) && !pressed ) {
-				changeState(button, UP);
-				button->onRelease(button->model);
+			if(delayRead(&button->delay)) {
+				if(!pressed) {
+					changeState(button, UP);
+					button->onRelease(button->model);
+				}
+				else {
+					changeState(button, DOWN);
+				}
 			}
 			break;
 		}
